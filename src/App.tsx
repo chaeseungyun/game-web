@@ -58,9 +58,10 @@ function App() {
       currentQuizIndex.current = 0;
       setCurrentQuiz(quizzes[currentQuizIndex.current]);
       setGameMode('playing');
-
+      setUserAnswers(null);
       setAnswerResult(null);
       setTimerKey(prev => prev + 1);
+
     } catch (err) {
       console.error('[App] Start game error:', err);
       const errorMessage = err instanceof QuizApiError
@@ -75,15 +76,17 @@ function App() {
   };
 
   const onAnswer = (answer: number) => {
+    if (userAnswers !== null) return;
     setUserAnswers(answer);
-  }
+  };
 
   // useEffect에서 사용자 응답 통합 처리
   useEffect(() => {
-    console.log('[App] User answer detected:', userAnswers);
+    let cancelled = false;
+  
     const handleAnswerClick = async (user_answer: number) => {
       // 중복 클릭 방지
-      if (loading || !currentQuiz) return;
+      if (loading || !currentQuiz || cancelled) return;
 
       setLoading(true);
       setError(null);
@@ -135,7 +138,12 @@ function App() {
     };
     if (userAnswers === null) return;
     handleAnswerClick(userAnswers);
-  }, [userAnswers])
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userAnswers]);
+
   const handleNextQuestion = () => {
     console.log('[App] Moving to next question...');
 
